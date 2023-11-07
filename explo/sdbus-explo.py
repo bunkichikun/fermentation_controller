@@ -1,10 +1,10 @@
 import asyncio
 import time
 import sdbus
-from sdbus_async.networkmanager import NetworkManager
 from enum import Enum
 from sdbus_async.networkmanager import (
     NetworkManager,
+    NetworkManagerState,
     NetworkDeviceGeneric,
     DeviceState,
     DeviceType,
@@ -73,6 +73,17 @@ async def list_active_hardware_networkdevice_states(only_hw: bool) -> None:
 async def init_catcher(iface):
     print("init catcher")
     nm = NetworkManager()
+    raw_state = await nm.state
+    print(raw_state)
+    obj_state = NetworkManagerState(raw_state)
+    print(obj_state)
+    title_state = title(obj_state)
+    print(title_state)
+    state = title(NetworkManagerState(await nm.state))
+    print(state)
+    print("state: " + str(state))
+    print(str())
+    
     devices_paths = await nm.get_devices()
 
     print("Interface         Type     State        Internet Connection")
@@ -107,7 +118,7 @@ async def main():
     non_blocking_io_2())
 
 
-nm = NetworkManager()
+#nm = NetworkManager()
 
 
 

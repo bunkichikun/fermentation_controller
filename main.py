@@ -1,12 +1,11 @@
-import sdbus
-from sdbus_async.networkmanager import NetworkManager
-
 import asyncio
+import sdbus
 
 from sdbus_async.networkmanager import (
     NetworkManager,
     NetworkDeviceGeneric,
-    DeviceState
+    DeviceState,
+    NetworkManagerState
  )
 
 
@@ -16,41 +15,40 @@ HEARTBEAT_ON=0.5
 HEARTBEAT_PATTERN_ONLINE="ONLINE"
 HEARTBEAT_PATTERN_OFFLINE="OFFLINE"
 
-NET_IFACE_TO_MONITOR="wlp0s20f3"
-
 TMP_CTRL_PERIOD = 7
 
 
-# CLASSES
+
+############ CLASSES
+
+############# HEARTBEAT MANAGER
+
 class HeartBeatManager:
 
-    def __init__(self,iface):
+    def __init__(self):
         self.pattern = HEARTBEAT_PATTERN_OFFLINE
-        sdbus.set_default_bus(sdbus.sd_bus_open_system())
         self.netman = NetworkManager()
-        self.iface = iface
-        
+        #asyncio.run(self.init_net_status())
+
+    async def init_net_status(self):
+        state = await self.netman.state
+        self.stateChange(state)
+                
     def setOnline(self):
         self.pattern = HEARTBEAT_PATTERN_ONLINE
 
-        
     def setOffline(self):
         self.pattern = HEARTBEAT_PATTERN_OFFLINE
 
         
-    #def stateChangeHandler(self, nm, interface, signal, state):
-    #    print(str(state))
-    #    if state ==  NetworkManager.NM_STATE_CONNECTED_LOCAL or state == NetworkManager.NM_STATE_CONNECTED_GLOBAL:
-    #        print("connected local or global")
-    #        self.setOnline()
-    #    else:
-    #        print("not connected")
-    #        self.setOffline()
-
-    def stateChange(self, new_state, old_state, reason):
+    def stateChange(self, new_state):
         print("state changed baby!")
-        print(str((new_state, old_state, reason)))
-
+        if new_state == NetworkManagerState.CONNECTED_LOCAL or new_state == NetworkManagerState.CONNECTED_SITE or new_state == NetworkManagerState.GLOBAL:
+            print("connected local or global")
+            self.setOnline()
+        else:
+            print("not connected")
+            self.setOffline()
 
             
     async def pulseOffline(self):
@@ -83,26 +81,15 @@ class HeartBeatManager:
         #await self.blink()
 
 
-    async def init_catcher(self):
-        devices_paths = await self.netman.get_devices()
-        
-        print("Interface         Type     State        Internet Connection")
-        for device_path in devices_paths:
-            generic = NetworkDeviceGeneric(device_path)
-            dev_name = await generic.interface
-            print(dev_name)
-            if dev_name == self.iface:
-                print("found you!")
-                return generic
-
-
-
     async def stateChangeCatcher(self):
         print("start catcher")
-        dev = await self.init_catcher()
-        async for (new_state, old_state, reason) in dev.state_changed:
+
+        init_state = await self.netman.state
+        self.stateChange(init_state)
+        
+        async for new_state in self.netman.state_changed:
             print("toto")
-            self.stateChange(new_state, old_state, reason)     
+            self.stateChange(new_state)     
 
             
         
@@ -119,6 +106,7 @@ class HeartBeatManager:
                 print("not supported pattern")
     
 
+######### TEMPERATURE MANAGER
 
 class TemperatureManager:
 
@@ -148,16 +136,16 @@ class TemperatureManager:
         while True:
             await self.temperatureControl()
             await asyncio.sleep(TMP_CTRL_PERIOD)
-                
+
+
+############ FERMENTATION CONTROLLER            
             
                 
 class FermentationController:
 
     def __init__(self, targetTemp):
         self.tmpCtrl = TemperatureManager(targetTemp)
-        self.HeartBeatMgr = HeartBeatManager(NET_IFACE_TO_MONITOR)
-
-
+        self.HeartBeatMgr = HeartBeatManager()
         
         
     async def loop(self):
@@ -167,7 +155,15 @@ class FermentationController:
                              self.HeartBeatMgr.stateChangeCatcher())
             
 
-            
+
+######### END OF CLASSES
+
+        
+sdbus.set_default_bus(sdbus.sd_bus_open_system())
 
 myFC = FermentationController(60)
 asyncio.run(myFC.loop())
+
+
+
+
