@@ -33,7 +33,7 @@ async def non_blocking_io_2():
 
 
 
-        
+
 
 def title(enum: Enum) -> str:
     """Get the name of an enum: 1st character is uppercase, rest lowercase"""
@@ -83,7 +83,7 @@ async def init_catcher(iface):
     print(state)
     print("state: " + str(state))
     print(str())
-    
+
     devices_paths = await nm.get_devices()
 
     print("Interface         Type     State        Internet Connection")
@@ -95,8 +95,7 @@ async def init_catcher(iface):
             print("found you!")
             return generic
 
-        
-        
+
 async def stateChangeCatcher(iface):
     print("start catcher")
     dev = await init_catcher(iface)
