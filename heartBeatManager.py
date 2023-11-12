@@ -1,6 +1,8 @@
 import asyncio
 import sdbus
 
+from gpiozero import LED
+
 from sdbus_async.networkmanager import (
     NetworkManager,
     NetworkDeviceGeneric,
@@ -15,6 +17,8 @@ HEARTBEAT_ON=0.5
 HEARTBEAT_PATTERN_ONLINE="ONLINE"
 HEARTBEAT_PATTERN_OFFLINE="OFFLINE"
 
+HEART_BEAT_LED_GPIO = 17
+
 
 ############ CLASSES
 
@@ -25,6 +29,7 @@ class HeartBeatManager:
     def __init__(self):
         self.pattern = HEARTBEAT_PATTERN_OFFLINE
         self.netman = NetworkManager()
+        self.led = LED(HEART_BEAT_LED_GPIO)
         #asyncio.run(self.init_net_status())
 
     async def init_net_status(self):
@@ -50,32 +55,31 @@ class HeartBeatManager:
 
     async def pulseOffline(self):
         print("light on :" + str(HEARTBEAT_ON))
-        #TODO GPIO ON
+        self.led.on()
         await asyncio.sleep(HEARTBEAT_ON)
 
         print("light off :" + str(HEARTBEAT_PERIOD - HEARTBEAT_ON))
-        #TODO GPIO OFF
+        self.led.off()
         await asyncio.sleep(HEARTBEAT_PERIOD - HEARTBEAT_ON)
-        #await self.blink()
 
 
     async def pulseOnline(self):
         print("light on :" + str(HEARTBEAT_ON/2))
-        #TODO GPIO ON
+        self.led.on()
         await asyncio.sleep(HEARTBEAT_ON/2)
 
         print("light off :" + str(HEARTBEAT_ON/2))
-        #TODO GPIO OFF
+        self.led.off()
         await asyncio.sleep(HEARTBEAT_ON/2)
 
         print("light on :" + str(HEARTBEAT_ON/2))
-        #TODO GPIO ON
+        self.led.on()
         await asyncio.sleep(HEARTBEAT_ON/2)
 
         print("light off :" + str(HEARTBEAT_PERIOD - 3/2*HEARTBEAT_ON))
-        #TODO GPIO OFF
+        self.led.off()
         await asyncio.sleep(HEARTBEAT_PERIOD - 3/2*HEARTBEAT_ON)
-        #await self.blink()
+
 
 
     async def stateChangeCatcher(self):
