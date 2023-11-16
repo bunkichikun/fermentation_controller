@@ -25,26 +25,27 @@ class TemperatureManager:
     async def checkTemperature(self):
         print("check Temperature")
 
-        for i in [n for n in range(0,HT_READ_RETRY_NUMBER)]:
+        for i in [n for n in range(0,DHT_READ_RETRY_NUMBER)]:
             try:
 
-                (temperature, humidity) = (dhtDevice.temperature, dhtDevice.humidity)
+                (temperature, humidity) = (self.dhtDevice.temperature, self.dhtDevice.humidity)
                 return (temperature, humidity)
 
             except RuntimeError as error:
                 print("TmpCtrl Read Exception: " + error.args[0])
                 continue
             except Exception as error:
-                dhtDevice.exit()
+                self.dhtDevice.exit()
                 raise error
 
         #temp=42
         #print("temperature is: " +str(temp))
-        return temp
+        #return temp
 
 
     async def temperatureControl(self):
         (temp, humid) = await self.checkTemperature()
+        print ("Temp: " + str(temp) + " Humidity: "+ str(humid))
         if temp < self.targetTemperature:
             # turn heating on
             print("turn heating on")

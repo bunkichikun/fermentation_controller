@@ -2,3 +2,9 @@
 
 pip install sdbus
 pip install sdbus-networkmanager
+
+
+# AM2302
+    pip3 install adafruit-blinka
+    pip3 install adafruit-circuitpython-dht
+    sudo apt-get install libgpiod2
