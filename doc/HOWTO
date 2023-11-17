@@ -8,3 +8,8 @@ pip install sdbus-networkmanager
     pip3 install adafruit-blinka
     pip3 install adafruit-circuitpython-dht
     sudo apt-get install libgpiod2
+
+# RDTOOLS
+sudo apt-get install rrdtool
+pip install rrdtool
+sudo apt-get install librrd-dev libpython3-dev
