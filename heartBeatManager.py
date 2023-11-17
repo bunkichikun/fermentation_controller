@@ -31,6 +31,7 @@ class HeartBeatManager:
         self.netman = NetworkManager()
         self.led = LED(HEART_BEAT_LED_GPIO)
         #asyncio.run(self.init_net_status())
+        print("end of HeartBeatManager Init")
 
     async def init_net_status(self):
         state = await self.netman.state

@@ -10,7 +10,7 @@ TMP_CTRL_PERIOD = 15
 
 DHT_READ_RETRY_NUMBER=15
 
-RRD_DB_NAME = "temp_ctrl.rrd"
+RRD_DB_NAME = "run/temp_ctrl.rrd"
 RRD_TOTAL_DURATION = 60 * 24 * 3   # 3 days
 
 ############ CLASSES
@@ -22,13 +22,14 @@ class TemperatureManager:
 
     def __init__(self, targetTemp):
         self.targetTemperature = targetTemp
+        print("creating RRD database")
         self.dhtDevice = adafruit_dht.DHT22(board.D4, use_pulseio=True)
         rrdtool.create(
             RRD_DB_NAME,
             "--start","now",
             "--step", str(2 * TMP_CTRL_PERIOD),
-            "DS:temp:GAUGE:"+ str(4 * TMP_CTRL_PERIOD)+":0:90",
-            "DS:hum:GAUGE:4:0:100",
+            "DS:temp:GAUGE:"+ str(4 * TMP_CTRL_PERIOD) +":0:90",
+            "DS:hum:GAUGE:"+ str(4 * TMP_CTRL_PERIOD) +":0:100",
             "RRA:AVERAGE:0.5:1:" + str(RRD_TOTAL_DURATION))
 
     async def checkTemperature(self):
