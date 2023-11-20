@@ -2,6 +2,8 @@ import asyncio
 import time
 import signal
 
+#from asyncio.CancelledError import CancelledError
+
 from argparse import ArgumentParser
 import os
 from pathlib import Path
@@ -39,7 +41,8 @@ class FermentationController:
         self.loop = asyncio.new_event_loop()
         signals = (signal.SIGTERM, signal.SIGINT)
         for s in signals:
-            loop.add_signal_handler(s, lambda s=s: asyncio.create_task(signalHandler(s, self.loop)))
+            print ("titi")
+            self.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(self.signalHandler(s, self.loop)))
         # TODO set this loop as system current loop https://www.slingacademy.com/article/python-asyncio-what-are-coroutines-and-event-loops/
         asyncio.set_event_loop(self.loop)
 
@@ -48,11 +51,21 @@ class FermentationController:
         self.HeartBeatMgr = HeartBeatManager()
 
 
-    async def main_loop(self):
+    def main_loop(self):
         print("starting FC Main Loop")
-        await asyncio.gather(self.tmpCtrl.loop(),
-                             self.HeartBeatMgr.blink_loop(),
-                             self.HeartBeatMgr.stateChangeCatcher())
+
+        try:
+            self.loop.run_until_complete( asyncio.gather(
+                self.tmpCtrl.loop(),
+                self.HeartBeatMgr.blink_loop(),
+                self.HeartBeatMgr.stateChangeCatcher()))
+
+        except asyncio.CancelledError:
+            print ("CancelledError in main_loop")
+
+        self.loop.close()
+        print("finished main loop")
+        self.die()
 
 
     def checkLock(self):
@@ -77,19 +90,20 @@ class FermentationController:
         p.unlink(False)
 
 
-    async def singalHandler(self, sig, loop):
+    async def signalHandler(self, sig, loop):
+
+        print(" received signal: " + str(sig))
         tasks = asyncio.all_tasks() - {asyncio.current_task()}
         for task in tasks:
             task.cancel()
-
         await asyncio.gather(*tasks, return_exceptions=True)
-        loop.stop()
+        #print ("yeah !stopping loop")
 
 
     def die(self):
+        print("die die die")
         self.freeLock()
-        self.loop.close()
-        # TODO call die of other members of FC
+        sys.exit()
 
 
 ######### END OF CLASSES
@@ -97,7 +111,7 @@ class FermentationController:
 
 def do_main():
     myFC = FermentationController(TARGET_TEMP)
-    asyncio.run(myFC.main_loop())
+    myFC.main_loop()
     myFC.die()
 
 
