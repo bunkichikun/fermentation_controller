@@ -1,6 +1,6 @@
 import asyncio
-import sdbus
 import time
+import signal
 
 from argparse import ArgumentParser
 import os
@@ -28,20 +28,31 @@ LOCK_FILE_PATH = "run/LOCK"
 class FermentationController:
 
     def __init__(self, targetTemp):
+
+        #LOCK
         if self.checkLock():
             print("Lock is taken... a fermentation_controller instance is already running\nTerminating...")
             sys.exit()
         self.takeLock()
+
+        # Prepare signal handler
+        self.loop = asyncio.new_event_loop()
+        signals = (signal.SIGTERM, signal.SIGINT)
+        for s in signals:
+            loop.add_signal_handler(s, lambda s=s: asyncio.create_task(signalHandler(s, self.loop)))
+        # TODO set this loop as system current loop https://www.slingacademy.com/article/python-asyncio-what-are-coroutines-and-event-loops/
+        asyncio.set_event_loop(self.loop)
+
+        # init members
         self.tmpCtrl = TemperatureManager(targetTemp)
         self.HeartBeatMgr = HeartBeatManager()
 
 
-    async def loop(self):
+    async def main_loop(self):
         print("starting FC Main Loop")
         await asyncio.gather(self.tmpCtrl.loop(),
                              self.HeartBeatMgr.blink_loop(),
                              self.HeartBeatMgr.stateChangeCatcher())
-                             # TODO add signal handler
 
 
     def checkLock(self):
@@ -66,23 +77,27 @@ class FermentationController:
         p.unlink(False)
 
 
-    def singalHandler(self):
-        pass
+    async def singalHandler(self, sig, loop):
+        tasks = asyncio.all_tasks() - {asyncio.current_task()}
+        for task in tasks:
+            task.cancel()
+
+        await asyncio.gather(*tasks, return_exceptions=True)
+        loop.stop()
 
 
     def die(self):
         self.freeLock()
+        self.loop.close()
         # TODO call die of other members of FC
 
 
 ######### END OF CLASSES
 
 
-def main_loop():
-    sdbus.set_default_bus(sdbus.sd_bus_open_system())
-
+def do_main():
     myFC = FermentationController(TARGET_TEMP)
-    asyncio.run(myFC.loop())
+    asyncio.run(myFC.main_loop())
     myFC.die()
 
 
@@ -130,6 +145,6 @@ if __name__ == "__main__":
         kill_and_rm_lock_file()
         pass
     else:
-        main_loop()
+        do_main()
 
 

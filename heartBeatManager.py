@@ -27,6 +27,9 @@ HEART_BEAT_LED_GPIO = 17
 class HeartBeatManager:
 
     def __init__(self):
+        # plug to DBUS to catch network (dis)connection signals
+        sdbus.set_default_bus(sdbus.sd_bus_open_system())
+
         self.pattern = HEARTBEAT_PATTERN_OFFLINE
         self.netman = NetworkManager()
         self.led = LED(HEART_BEAT_LED_GPIO)
