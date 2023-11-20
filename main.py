@@ -16,7 +16,7 @@ from temperatureManager import TemperatureManager
 
 TARGET_TEMP = 60
 
-LOCK_FILE_PATH = "toto"
+LOCK_FILE_PATH = "run/LOCK"
 
 
 ############ CLASSES
@@ -51,6 +51,7 @@ class FermentationController:
 
     def takeLock(self):
         try:
+            print("taking Lock file")
             with open(LOCK_FILE_PATH, 'x') as f:
                 f.write('%s %s\n' % (int(time.time()), os.getpid()))
         except FileNotFoundError:
@@ -60,6 +61,7 @@ class FermentationController:
 
 
     def freeLock(self):
+        print("removing Lock file")
         p=Path(LOCK_FILE_PATH)
         p.unlink(False)
 
@@ -88,18 +90,22 @@ def kill_and_rm_lock_file():
     try:
         with open(LOCK_FILE_PATH, 'r') as f:
             content = f.readlines()
+
+            line=content[0]
+            [timestamp, pid] = line.split(" ")
+            try:
+                os.kill(int(pid), signal.SIGHUP)
+            except ProcessLookupError:
+                print("no such process...")
+            except TabError:
+                print("LOCK File seems to be empty")
+
+            p=Path(LOCK_FILE_PATH)
+            p.unlink(False)
+
     except FileNotFoundError:
         print("The Lock file directory does not exist")
 
-    for line in content:
-        [timestamp, pid] = line.split(" ")
-        try:
-            os.kill(int(pid), signal.SIGHUP)
-        except ProcessLookupError:
-            print("no such process...")
-
-        p=Path(LOCK_FILE_PATH)
-        p.unlink(False)
 
 
 
@@ -119,9 +125,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print(args.kill)
-
     if args.kill:
+        print("Let's kill the running instance and remove the lock file")
         kill_and_rm_lock_file()
         pass
     else:
