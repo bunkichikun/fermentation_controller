@@ -1,5 +1,6 @@
 import asyncio
 import time
+
 import board
 import adafruit_dht
 import rrdtool
@@ -12,6 +13,25 @@ DHT_READ_RETRY_NUMBER=15
 
 RRD_DB_NAME = "run/temp_ctrl.rrd"
 RRD_TOTAL_DURATION = 60 * 24 * 3   # 3 days
+
+
+
+# functions
+
+
+def generate_graph(t):
+    rrdtool.graph("/home/benoit/public_html/temp.png",
+                  "--start", str(t),
+                  "--end", "now",
+                  "--height", "700",
+                  "--width", "2400",
+                  "DEF:mytemp="+RRD_DB_NAME+":temp:AVERAGE",
+                  "DEF:myhum="+RRD_DB_NAME+":hum:AVERAGE",
+                  "LINE2:mytemp#FF0000",
+                  "LINE3:myhum#00FF00")
+
+
+
 
 ############ CLASSES
 

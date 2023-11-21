@@ -11,7 +11,7 @@ import sys
 import signal
 
 from heartBeatManager import  HeartBeatManager
-from temperatureManager import TemperatureManager
+from temperatureManager import TemperatureManager, generate_graph
 
 
 #CONSTANTS
@@ -31,6 +31,8 @@ class FermentationController:
 
     def __init__(self, targetTemp):
 
+
+        self.startTime = time.time()
         #LOCK
         if self.checkLock():
             print("Lock is taken... a fermentation_controller instance is already running\nTerminating...")
@@ -135,6 +137,22 @@ def kill_and_rm_lock_file():
     except FileNotFoundError:
         print("The Lock file directory does not exist")
 
+    sys.exit()
+
+
+def gen_rrdtool_graph():
+    try:
+        with open(LOCK_FILE_PATH, 'r') as f:
+            content = f.readlines()
+
+            line=content[0]
+            [timestamp, pid] = line.split(" ")
+            print("lets' graph baby! time is:" + str(timestamp))
+            generate_graph(timestamp)
+    except FileNotFoundError:
+        print("The Lock file directory does not exist")
+
+    sys.exit()
 
 
 
@@ -148,16 +166,18 @@ if __name__ == "__main__":
     parser.add_argument("-k", "--kill",
                         help="gracefully kill any running instance",
                         action='store_true')
-    #parser.add_argument("-c", "--clean",
-    #                    help="remove lock file",
-    #                    action="store_true")
+    parser.add_argument("-g", "--graph",
+                        help="generate new image in public_html",
+                        action="store_true")
 
     args = parser.parse_args()
 
     if args.kill:
         print("Let's kill the running instance and remove the lock file")
         kill_and_rm_lock_file()
-        pass
+    elif args.graph:
+        print("let's generate a new graph and copy it to public_html")
+        gen_rrdtool_graph()
     else:
         do_main()
 
