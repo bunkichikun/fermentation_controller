@@ -1,5 +1,6 @@
 import asyncio
 import time
+import logging
 
 import board
 import adafruit_dht
@@ -42,7 +43,7 @@ class TemperatureManager:
 
     def __init__(self, targetTemp):
         self.targetTemperature = targetTemp
-        print("creating RRD database")
+        logging.info("creating RRD database")
         self.dhtDevice = adafruit_dht.DHT22(board.D4, use_pulseio=True)
         rrdtool.create(
             RRD_DB_NAME,
@@ -53,7 +54,7 @@ class TemperatureManager:
             "RRA:AVERAGE:0.5:1:" + str(RRD_TOTAL_DURATION))
 
     async def checkTemperature(self):
-        print("check Temperature")
+        self.info("check Temperature")
 
         for i in [n for n in range(0,DHT_READ_RETRY_NUMBER)]:
             try:
@@ -63,25 +64,22 @@ class TemperatureManager:
                 return (temperature, humidity)
 
             except RuntimeError as error:
-                print("TmpCtrl Read Exception: " + error.args[0])
+                logging.error("TmpCtrl Read Exception: " + error.args[0])
                 continue
             except Exception as error:
                 self.dhtDevice.exit()
                 raise error
 
-        #temp=42
-        #print("temperature is: " +str(temp))
-        #return temp
-
 
     async def temperatureControl(self):
         (temp, humid) = await self.checkTemperature()
-        print ("Temp: " + str(temp) + " Humidity: "+ str(humid))
+        logging.info("Temp: " + str(temp) + " Humidity: "+ str(humid))
         if temp < self.targetTemperature:
             # turn heating on
-            print("turn heating on")
+            logging.info("turn heating on")
         else:
-            print("waiting for temperature to decrease")
+            pass
+            #logging.info("waiting for temperature to decrease")
 
 
     async def loop(self):

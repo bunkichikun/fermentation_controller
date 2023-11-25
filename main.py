@@ -1,8 +1,8 @@
 import asyncio
 import time
 import signal
+import logging
 
-#from asyncio.CancelledError import CancelledError
 
 from argparse import ArgumentParser
 import os
@@ -19,6 +19,9 @@ from temperatureManager import TemperatureManager, generate_graph
 TARGET_TEMP = 60
 
 LOCK_FILE_PATH = "run/LOCK"
+
+LOG_FILE_PATH = "fermentation_controller.log"
+
 
 
 ############ CLASSES
@@ -39,11 +42,15 @@ class FermentationController:
             sys.exit()
         self.takeLock()
 
+        #logging
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                            level=logging.DEBUG)
+
+
         # Prepare signal handler
         self.loop = asyncio.new_event_loop()
         signals = (signal.SIGTERM, signal.SIGINT)
         for s in signals:
-            print ("titi")
             self.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(self.signalHandler(s, self.loop)))
         # TODO set this loop as system current loop https://www.slingacademy.com/article/python-asyncio-what-are-coroutines-and-event-loops/
         asyncio.set_event_loop(self.loop)
@@ -54,7 +61,7 @@ class FermentationController:
 
 
     def main_loop(self):
-        print("starting FC Main Loop")
+        loogging.info("starting FC Main Loop")
 
         try:
             self.loop.run_until_complete( asyncio.gather(
@@ -63,10 +70,10 @@ class FermentationController:
                 self.HeartBeatMgr.stateChangeCatcher()))
 
         except asyncio.CancelledError:
-            print ("CancelledError in main_loop")
+            logging.error("CancelledError in main_loop")
 
         self.loop.close()
-        print("finished main loop")
+        logging.info("finished main loop")
         self.die()
 
 
@@ -77,33 +84,32 @@ class FermentationController:
 
     def takeLock(self):
         try:
-            print("taking Lock file")
+            logging.info("taking Lock file")
             with open(LOCK_FILE_PATH, 'x') as f:
                 f.write('%s %s\n' % (int(time.time()), os.getpid()))
         except FileNotFoundError:
-            print("The Lock file directory does not exist")
+            logging.error("The Lock file directory does not exist")
         except FileExistsError:
-            print("The Lock file already exist")
+            logging.error("The Lock file already exist")
 
 
     def freeLock(self):
-        print("removing Lock file")
+        logging.info("removing Lock file")
         p=Path(LOCK_FILE_PATH)
         p.unlink(False)
 
 
     async def signalHandler(self, sig, loop):
 
-        print(" received signal: " + str(sig))
+        logging.info(" received signal: " + str(sig))
         tasks = asyncio.all_tasks() - {asyncio.current_task()}
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
-        #print ("yeah !stopping loop")
 
 
     def die(self):
-        print("die die die")
+        logging.info("die die die!")
         self.freeLock()
         sys.exit()
 
@@ -127,15 +133,15 @@ def kill_and_rm_lock_file():
             try:
                 os.kill(int(pid), signal.SIGHUP)
             except ProcessLookupError:
-                print("no such process...")
+                logging.error("no such process...")
             except TabError:
-                print("LOCK File seems to be empty")
+                logging.error("LOCK File seems to be empty")
 
             p=Path(LOCK_FILE_PATH)
             p.unlink(False)
 
     except FileNotFoundError:
-        print("The Lock file directory does not exist")
+        logging.error("The Lock file directory does not exist")
 
     sys.exit()
 
