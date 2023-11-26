@@ -1,5 +1,6 @@
 import asyncio
 import sdbus
+import logging
 
 from gpiozero import LED
 
@@ -9,6 +10,8 @@ from sdbus_async.networkmanager import (
     DeviceState,
     NetworkManagerState
  )
+
+import fc_settings
 
 #CONSTANTS
 
@@ -46,12 +49,12 @@ class HeartBeatManager:
 
 
     def stateChange(self, new_state):
-        logging.ingfo("state changed baby!")
+        fc_settings.FC_LOGGER.info("state changed baby!")
         if new_state == NetworkManagerState.CONNECTED_LOCAL or new_state == NetworkManagerState.CONNECTED_SITE or new_state == NetworkManagerState.GLOBAL:
-            logging.info("connected local or global")
+            fc_settings.FC_LOGGER.info("connected local or global")
             self.setOnline()
         else:
-            logging.info("not connected")
+            fc_settings.FC_LOGGER.info("not connected")
             self.setOffline()
 
 
@@ -88,12 +91,12 @@ class HeartBeatManager:
 
 
     async def blink_loop(self):
-        logging.info("start blinking")
+        fc_settings.FC_LOGGER.info("start blinking")
         while True:
             if self.pattern == HEARTBEAT_PATTERN_ONLINE:
                 await self.pulseOnline()
             elif self.pattern == HEARTBEAT_PATTERN_OFFLINE:
                 await self.pulseOffline()
             else:
-                logging.error("not supported pattern")
+                fc_settings.FC_LOGGER.error("not supported pattern")
 
