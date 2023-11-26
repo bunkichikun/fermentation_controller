@@ -43,8 +43,10 @@ class FermentationController:
         self.takeLock()
 
         #logging
-        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                            level=logging.DEBUG)
+        logging.basicConfig(
+            filename="fermentation_controller.log",
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            level=logging.DEBUG)
 
 
         # Prepare signal handler
