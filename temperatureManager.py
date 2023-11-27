@@ -112,7 +112,7 @@ class TemperatureManager:
 
 
     async def checkTemperature(self):
-        fc_settings.FC_LOGGER.info("check Temperature")
+        #fc_settings.FC_LOGGER.info("check Temperature")
 
         for i in [n for n in range(0,DHT_READ_RETRY_NUMBER)]:
             try:
@@ -141,7 +141,10 @@ class TemperatureManager:
 
         fc_settings.FC_LOGGER.info("Temp: " + str(temp) + " Humidity: "+ str(humid))
 
-        if self.PID_U() < 0
+        U = self.PID_U()
+        fc_settings.FC_LOGGER.debug("U: " + str(U))
+        if U > 0:
+        #if self.PID_U() > 0:
             # turn heating on
             fc_settings.FC_LOGGER.info("turn heating on")
         else:

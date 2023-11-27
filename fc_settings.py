@@ -1,10 +1,10 @@
 import logging
 
-LOG_FILE_PATH = "fermentation_controller.log"
+LOG_FILE_PATH = "run/fermentation_controller.log"
 
 
 def init_fc_logger():
-    logging.basicConfig(filename="fermentation_controller.log",
+    logging.basicConfig(filename=LOG_FILE_PATH,
                         filemode='w',
                         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         level=logging.DEBUG)

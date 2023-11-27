@@ -29,7 +29,7 @@ class FermentationController:
 
         self.startTime = time.time()
         #logging
-        fc_settings.init()
+        fc_settings.init_fc_logger()
 
         #LOCK
         if self.checkLock():

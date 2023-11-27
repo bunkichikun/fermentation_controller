@@ -13,3 +13,28 @@ pip install sdbus-networkmanager
 sudo apt-get install rrdtool
 pip install rrdtool
 sudo apt-get install librrd-dev libpython3-dev
+
+
+## InfluxDB
+#https://pimylifeup.com/raspberry-pi-influxdb/
+#curl https://repos.influxdata.com/influxdata-archive.key | gpg --dearmor | sudo tee /usr/share/keyrings/influxdb-archive-keyring.gpg >/dev/null
+#echo "deb [signed-by=/usr/share/keyrings/influxdb-archive-keyring.gpg] https://repos.influxdata.com/debian bullseye stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+#sudo apt install influxdb
+
+#pip install influxdb-client ## only for InfluxDB 2 !!
+
+
+## Prometheus
+https://github.com/prometheus/prometheus/releases/download/v2.37.9/prometheus-2.37.9.netbsd-armv6.tar.gz
+
+
+## graphana
+# https://grafana.com/tutorials/install-grafana-on-raspberry-pi/
+sudo apt-get install -y adduser libfontconfig1 musl
+wget https://dl.grafana.com/enterprise/release/grafana-enterprise-rpi_9.3.6_armhf.deb
+sudo dpkg -i grafana-enterprise-rpi_9.3.6_armhf.deb
+
+
+sudo /bin/systemctl enable grafana-server
+sudo /bin/systemctl start grafana-server
+# password grafana
