@@ -9,11 +9,9 @@ import sys
 
 from heartBeatManager import  HeartBeatManager
 from temperatureManager import TemperatureManager, generate_graph
-import fc_settings 
+import fc_settings
 
 #CONSTANTS
-
-TARGET_TEMP = 60
 
 LOCK_FILE_PATH = "run/LOCK"
 
@@ -26,7 +24,7 @@ LOCK_FILE_PATH = "run/LOCK"
 
 class FermentationController:
 
-    def __init__(self, targetTemp):
+    def __init__(self):
 
 
         self.startTime = time.time()
@@ -48,7 +46,7 @@ class FermentationController:
         asyncio.set_event_loop(self.loop)
 
         # init members
-        self.tmpCtrl = TemperatureManager(targetTemp)
+        self.tmpCtrl = TemperatureManager(self.startTime)
         self.HeartBeatMgr = HeartBeatManager()
 
 
@@ -110,7 +108,7 @@ class FermentationController:
 
 
 def do_main():
-    myFC = FermentationController(TARGET_TEMP)
+    myFC = FermentationController()
     myFC.main_loop()
     myFC.die()
 
