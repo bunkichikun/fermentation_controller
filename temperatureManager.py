@@ -139,6 +139,7 @@ class TemperatureManager:
         self.currentTemp = temp
         self.targetTemp = target_temp(time.time() - self.startTime)
 
+        #fc_settings.FC_LOGGER.debug("Time: " + str(time.time() - self.startTime))
         fc_settings.FC_LOGGER.info("Temp: " + str(temp) + " Humidity: "+ str(humid))
 
         U = self.PID_U()
