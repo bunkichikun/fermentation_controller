@@ -25,8 +25,12 @@ sudo apt-get install librrd-dev libpython3-dev
 
 
 ## Prometheus
-https://github.com/prometheus/prometheus/releases/download/v2.37.9/prometheus-2.37.9.netbsd-armv6.tar.gz
+# get the linux one https://github.com/prometheus/prometheus/releases/download/v2.37.9/prometheus-2.37.9.netbsd-armv6.tar.gz
+#
+pip install prometheus-client
 
+python -m pip install prometheus-async
+python -m pip install prometheus-async[aiohttp]
 
 ## graphana
 # https://grafana.com/tutorials/install-grafana-on-raspberry-pi/

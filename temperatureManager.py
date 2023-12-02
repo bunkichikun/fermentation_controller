@@ -3,7 +3,10 @@ import time
 
 import board
 import adafruit_dht
+
 import rrdtool
+from prometheus_client import Gauge, Summary
+from prometheus_async.aio.web import start_http_server
 
 import fc_settings
 
@@ -30,6 +33,11 @@ PID_K_P = 1
 PID_K_I = 0
 PID_K_D = 0
 
+PROMETHEUS_EXPOSED_PORT = 8000
+
+# Metrics
+FC_PROCESSING_TIME = Summary('f_loop_time', "Time spent in the temperature control of the llop")
+
 
 # functions
 
@@ -52,12 +60,13 @@ def target_temp(t):
     elif t <= TARGET_INIT_DURATION:
         return TARGET_INIT_TEMP
 
-    elif t<= TARGET_FERMENTATION_DURATION:
+    elif t<= TARGET_INIT_DURATION + TARGET_FERMENTATION_DURATION:
         return TARGET_FERMENTATION_TEMP
 
-    elif TARGET_COOLING_DURATION:
-        return TARGET_COOLING_TEMP
-
+    elif t<= TARGET_INIT_DURATION + TARGET_FERMENTATION_DURATION + TARGET_COOLING_DURATION:
+        # linear decrease of target temperature
+        cooling_factor = (t - TARGET_INIT_DURATION + TARGET_FERMENTATION_DURATION) / TARGET_COOLING_DURATION
+        return TARGET_COOLING_TEMP + (TARGET_FERMENTATION_TEMP - TARGET_COOLING_TEMP) * cooling_factor
     else:
         return TARGET_REST_TEMP
 
@@ -77,10 +86,18 @@ class TemperatureManager:
 
         # cumulated Integration Error
         self.cumIntErr = 0
-        # temp
+
+        # temps for PID control
         self.targetTemperature = target_temp(1)
         self.previousTemp = 0
         self.currentTemp = 0
+
+        #Prometheus Gauges
+        #self.productTemp = Gauge("fc_product_temp", "Temperature of the Product")
+        self.chamberTemp = Gauge("fc_chamber_temp", "Temperature of the Frementation Chamber")
+        self.chamberHum = Gauge("fc_chamber_hum", "Humidity of the Fermentation Chamber")
+        self.targetTemp_g = Gauge("fc_target_temp", "Humidity of the Fermentation Chamber")
+
 
         fc_settings.FC_LOGGER.info("creating RRD database")
         # RRD DB INIT
@@ -91,6 +108,12 @@ class TemperatureManager:
             "DS:temp:GAUGE:"+ str(4 * TMP_CTRL_PERIOD) +":0:90",
             "DS:hum:GAUGE:"+ str(4 * TMP_CTRL_PERIOD) +":0:100",
             "RRA:AVERAGE:0.5:1:" + str(RRD_TOTAL_DURATION))
+
+
+    async def start_prometheus(self):
+        fc_settings.FC_LOGGER.info("Starting Prometheus HTTP Server to expose metrics")
+        await start_http_server(port=PROMETHEUS_EXPOSED_PORT)
+        fc_settings.FC_LOGGER.info("Prometheus HTTP Server started")
 
 
     # PID
@@ -110,7 +133,7 @@ class TemperatureManager:
     def PID_U(self):
         return PID_K_P * self.PID_P() + PID_K_I * self.PID_I() + PID_K_D * self.PID_D()
 
-
+    @FC_PROCESSING_TIME.time()
     async def checkTemperature(self):
         #fc_settings.FC_LOGGER.info("check Temperature")
 
@@ -131,13 +154,18 @@ class TemperatureManager:
                 self.dhtDevice.exit()
                 raise error
 
-
     async def temperatureControl(self):
         (temp, humid) = await self.checkTemperature()
 
+        # PID Time step update
         self.previousTemp = self.currentTemp
         self.currentTemp = temp
         self.targetTemp = target_temp(time.time() - self.startTime)
+
+        # Gauges update
+        self.targetTemp_g.set(self.targetTemp)
+        self.chamberTemp.set(temp)
+        self.chamberHum.set(humid)
 
         #fc_settings.FC_LOGGER.debug("Time: " + str(time.time() - self.startTime))
         fc_settings.FC_LOGGER.info("Temp: " + str(temp) + " Humidity: "+ str(humid))

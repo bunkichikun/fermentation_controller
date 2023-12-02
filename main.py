@@ -51,6 +51,10 @@ class FermentationController:
 
 
     def main_loop(self):
+        #INIT PROMETHEUS SERVER
+        self.loop.run_until_complete(self.tmpCtrl.start_prometheus())
+
+        # MAIN LOOP
         fc_settings.FC_LOGGER.info("starting FC Main Loop")
 
         try:
