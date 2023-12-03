@@ -8,7 +8,7 @@ from pathlib import Path
 import sys
 
 from heartBeatManager import  HeartBeatManager
-from temperatureManager import TemperatureManager, generate_graph
+from temperatureManager import TemperatureManager
 import fc_settings
 
 #CONSTANTS
@@ -51,14 +51,12 @@ class FermentationController:
 
 
     def main_loop(self):
-        #INIT PROMETHEUS SERVER
-        self.loop.run_until_complete(self.tmpCtrl.start_prometheus())
-
         # MAIN LOOP
         fc_settings.FC_LOGGER.info("starting FC Main Loop")
 
         try:
             self.loop.run_until_complete( asyncio.gather(
+                self.tmpCtrl.start_prometheus(),
                 self.tmpCtrl.loop(),
                 self.HeartBeatMgr.blink_loop(),
                 self.HeartBeatMgr.stateChangeCatcher()))
@@ -140,19 +138,19 @@ def kill_and_rm_lock_file():
     sys.exit()
 
 
-def gen_rrdtool_graph():
-    try:
-        with open(LOCK_FILE_PATH, 'r') as f:
-            content = f.readlines()
-
-            line=content[0]
-            [timestamp, pid] = line.split(" ")
-            print("lets' graph baby! time is:" + str(timestamp))
-            generate_graph(timestamp)
-    except FileNotFoundError:
-        print("The Lock file directory does not exist")
-
-    sys.exit()
+#def gen_rrdtool_graph():
+#    try:
+#        with open(LOCK_FILE_PATH, 'r') as f:
+#            content = f.readlines()
+#
+#            line=content[0]
+#            [timestamp, pid] = line.split(" ")
+#            print("lets' graph baby! time is:" + str(timestamp))
+#            generate_graph(timestamp)
+#    except FileNotFoundError:
+#        print("The Lock file directory does not exist")
+#
+#    sys.exit()
 
 
 
@@ -175,9 +173,9 @@ if __name__ == "__main__":
     if args.kill:
         print("Let's kill the running instance and remove the lock file")
         kill_and_rm_lock_file()
-    elif args.graph:
-        print("let's generate a new graph and copy it to public_html")
-        gen_rrdtool_graph()
+#    elif args.graph:
+#        print("let's generate a new graph and copy it to public_html")
+#        gen_rrdtool_graph()
     else:
         do_main()
 

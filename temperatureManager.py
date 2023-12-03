@@ -4,7 +4,7 @@ import time
 import board
 import adafruit_dht
 
-import rrdtool
+#import rrdtool
 from prometheus_client import Gauge, Summary
 from prometheus_async.aio.web import start_http_server
 
@@ -21,11 +21,11 @@ RRD_TOTAL_DURATION = 60 * 24 * 3   # 3 days
 
 # TARGET TEMPERATURE
 TARGET_INIT_TEMP = 39
-TARGET_INIT_DURATION = 60 * 60 * 4
+TARGET_INIT_DURATION = 60*60*1 #60 * 60 * 4
 TARGET_FERMENTATION_TEMP = 39
-TARGET_FERMENTATION_DURATION = 60 * 60 * 19
+TARGET_FERMENTATION_DURATION = 60*60*2 #60 * 60 * 19
 TARGET_COOLING_TEMP = 15
-TARGET_COOLING_DURATION = 60 * 60 * 5
+TARGET_COOLING_DURATION = 60*60*1 #60 * 60 * 5
 TARGET_REST_TEMP = 15
 
 #PID Coefficients
@@ -41,16 +41,16 @@ FC_PROCESSING_TIME = Summary('f_loop_time', "Time spent in the temperature contr
 
 # functions
 
-def generate_graph(t):
-    rrdtool.graph("/home/benoit/public_html/temp.png",
-                  "--start", str(t),
-                  "--end", "now",
-                  "--height", "700",
-                  "--width", "2400",
-                  "DEF:mytemp="+RRD_DB_NAME+":temp:AVERAGE",
-                  "DEF:myhum="+RRD_DB_NAME+":hum:AVERAGE",
-                  "LINE2:mytemp#FF0000",
-                  "LINE3:myhum#00FF00")
+#def generate_graph(t):
+#    rrdtool.graph("/home/benoit/public_html/temp.png",
+#                  "--start", str(t),
+#                  "--end", "now",
+#                  "--height", "700",
+#                  "--width", "2400",
+#                  "DEF:mytemp="+RRD_DB_NAME+":temp:AVERAGE",
+#                  "DEF:myhum="+RRD_DB_NAME+":hum:AVERAGE",
+#                  "LINE2:mytemp#FF0000",
+#                  "LINE3:myhum#00FF00")
 
 
 def target_temp(t):
@@ -101,13 +101,13 @@ class TemperatureManager:
 
         fc_settings.FC_LOGGER.info("creating RRD database")
         # RRD DB INIT
-        rrdtool.create(
-            RRD_DB_NAME,
-            "--start","now",
-            "--step", str(2 * TMP_CTRL_PERIOD),
-            "DS:temp:GAUGE:"+ str(4 * TMP_CTRL_PERIOD) +":0:90",
-            "DS:hum:GAUGE:"+ str(4 * TMP_CTRL_PERIOD) +":0:100",
-            "RRA:AVERAGE:0.5:1:" + str(RRD_TOTAL_DURATION))
+ #       rrdtool.create(
+ #           RRD_DB_NAME,
+ #           "--start","now",
+ #           "--step", str(2 * TMP_CTRL_PERIOD),
+ #           "DS:temp:GAUGE:"+ str(4 * TMP_CTRL_PERIOD) +":0:90",
+ #           "DS:hum:GAUGE:"+ str(4 * TMP_CTRL_PERIOD) +":0:100",
+ #           "RRA:AVERAGE:0.5:1:" + str(RRD_TOTAL_DURATION))
 
 
     async def start_prometheus(self):
@@ -144,7 +144,7 @@ class TemperatureManager:
                 (temperature, humidity) = (self.dhtDevice.temperature, self.dhtDevice.humidity)
 
                 # put temperature in DB
-                rrdtool.update(RRD_DB_NAME,'N:%s:%s'% (temperature, humidity))
+                #rrdtool.update(RRD_DB_NAME,'N:%s:%s'% (temperature, humidity))
                 return (temperature, humidity)
 
             except RuntimeError as error:
