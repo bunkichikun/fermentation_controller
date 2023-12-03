@@ -42,7 +42,7 @@ class FermentationController:
         signals = (signal.SIGTERM, signal.SIGINT)
         for s in signals:
             self.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(self.signalHandler(s, self.loop)))
-        # TODO set this loop as system current loop https://www.slingacademy.com/article/python-asyncio-what-are-coroutines-and-event-loops/
+        # set this loop as system current loop https://www.slingacademy.com/article/python-asyncio-what-are-coroutines-and-event-loops/
         asyncio.set_event_loop(self.loop)
 
         # init members
