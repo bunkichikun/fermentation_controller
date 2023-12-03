@@ -20,10 +20,10 @@ RRD_DB_NAME = "run/temp_ctrl.rrd"
 RRD_TOTAL_DURATION = 60 * 24 * 3   # 3 days
 
 # TARGET TEMPERATURE
-TARGET_INIT_TEMP = 39
-TARGET_INIT_DURATION = 60*60*1 #60 * 60 * 4
+TARGET_INIT_TEMP = 30
+TARGET_INIT_DURATION = 60*60*0.5 #60 * 60 * 4
 TARGET_FERMENTATION_TEMP = 39
-TARGET_FERMENTATION_DURATION = 60*60*2 #60 * 60 * 19
+TARGET_FERMENTATION_DURATION = 60*60*1 #60 * 60 * 19
 TARGET_COOLING_TEMP = 15
 TARGET_COOLING_DURATION = 60*60*1 #60 * 60 * 5
 TARGET_REST_TEMP = 15
@@ -64,9 +64,9 @@ def target_temp(t):
         return TARGET_FERMENTATION_TEMP
 
     elif t<= TARGET_INIT_DURATION + TARGET_FERMENTATION_DURATION + TARGET_COOLING_DURATION:
-        # linear decrease of target temperature
-        cooling_factor = (t - TARGET_INIT_DURATION + TARGET_FERMENTATION_DURATION) / TARGET_COOLING_DURATION
-        return TARGET_COOLING_TEMP + (TARGET_FERMENTATION_TEMP - TARGET_COOLING_TEMP) * cooling_factor
+        # linear decrease of target temperature from TARGET_FERMENTATION to TARGET_COOLING
+        cooling_factor = (t - TARGET_INIT_DURATION - TARGET_FERMENTATION_DURATION) / TARGET_COOLING_DURATION
+        return TARGET_FERMENTATION_TEMP + (t - TARGET_INIT_DURATION - TARGET_FERMENTATION_DURATION) * (TARGET_COOLING_TEMP - TARGET_FERMENTATION_TEMP) / TARGET_COOLING_DURATION
     else:
         return TARGET_REST_TEMP
 
@@ -112,7 +112,7 @@ class TemperatureManager:
 
     async def start_prometheus(self):
         fc_settings.FC_LOGGER.info("Starting Prometheus HTTP Server to expose metrics")
-        await start_http_server(port=PROMETHEUS_EXPOSED_PORT)
+        self.prom_http_server = await start_http_server(port=PROMETHEUS_EXPOSED_PORT)
         fc_settings.FC_LOGGER.info("Prometheus HTTP Server started")
 
 
