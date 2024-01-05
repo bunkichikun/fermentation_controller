@@ -1,3 +1,5 @@
+# Copyright (c) 2024 Benoît LIBEAU
+
 import asyncio
 import sdbus
 import logging

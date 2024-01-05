@@ -1,3 +1,5 @@
+# Copyright (c) 2024 Benoît LIBEAU
+
 import logging
 
 LOG_FILE_PATH = "run/fermentation_controller.log"

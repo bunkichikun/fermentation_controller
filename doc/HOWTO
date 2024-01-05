@@ -1,3 +1,5 @@
+# Copyright (c) 2024 Benoît LIBEAU
+
 # How to new install
 
 pip install sdbus
