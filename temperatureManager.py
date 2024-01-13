@@ -6,6 +6,8 @@ import time
 import board
 import adafruit_dht
 
+from w1thermsensor import AsyncW1ThermSensor
+
 #import rrdtool
 from prometheus_client import Gauge, Summary
 from prometheus_async.aio.web import start_http_server
@@ -83,6 +85,7 @@ class TemperatureManager:
     def __init__(self, startTime):
 
         self.dhtDevice = adafruit_dht.DHT22(board.D4, use_pulseio=True)
+        self.dsSensor = AsyncW1ThermSensor()   #DS18B20
 
         self.startTime = startTime
 
@@ -95,7 +98,7 @@ class TemperatureManager:
         self.currentTemp = 0
 
         #Prometheus Gauges
-        #self.productTemp = Gauge("fc_product_temp", "Temperature of the Product")
+        self.productTemp = Gauge("fc_product_temp", "Temperature of the Product")
         self.chamberTemp = Gauge("fc_chamber_temp", "Temperature of the Frementation Chamber")
         self.chamberHum = Gauge("fc_chamber_hum", "Humidity of the Fermentation Chamber")
         self.targetTemp_g = Gauge("fc_target_temp", "Humidity of the Fermentation Chamber")
@@ -139,15 +142,20 @@ class TemperatureManager:
     async def checkTemperature(self):
         #fc_settings.FC_LOGGER.info("check Temperature")
 
+        # Product temperature
+        productTemp = await self.dsSensor.get_temperature()
+        fc_settings.FC_LOGGER.info("Product Temperature: " + str(productTemp))
+
+        # room temp and humidity
         for i in [n for n in range(0,DHT_READ_RETRY_NUMBER)]:
             try:
 
                 # get temperature
-                (temperature, humidity) = (self.dhtDevice.temperature, self.dhtDevice.humidity)
+                (chamberTemp, humidity) = (self.dhtDevice.temperature, self.dhtDevice.humidity)
 
                 # put temperature in DB
                 #rrdtool.update(RRD_DB_NAME,'N:%s:%s'% (temperature, humidity))
-                return (temperature, humidity)
+                return (productTemp, chamberTemp, humidity)
 
             except RuntimeError as error:
                 fc_settings.FC_LOGGER.error("TmpCtrl Read Exception: " + error.args[0])
@@ -157,20 +165,21 @@ class TemperatureManager:
                 raise error
 
     async def temperatureControl(self):
-        (temp, humid) = await self.checkTemperature()
+        (productTemp, chamberTemp, humid) = await self.checkTemperature()
 
         # PID Time step update
         self.previousTemp = self.currentTemp
-        self.currentTemp = temp
+        self.currentTemp = productTemp
         self.targetTemp = target_temp(time.time() - self.startTime)
 
         # Gauges update
         self.targetTemp_g.set(self.targetTemp)
-        self.chamberTemp.set(temp)
+        self.chamberTemp.set(chamberTemp)
+        self.productTemp.set(productTemp)
         self.chamberHum.set(humid)
 
         #fc_settings.FC_LOGGER.debug("Time: " + str(time.time() - self.startTime))
-        fc_settings.FC_LOGGER.info("Temp: " + str(temp) + " Humidity: "+ str(humid))
+        fc_settings.FC_LOGGER.info("Product Temp: " + str(productTemp) + "Chamber Temp: " + str(chamberTemp)  + " Humidity: "+ str(humid))
 
         U = self.PID_U()
         fc_settings.FC_LOGGER.debug("U: " + str(U))

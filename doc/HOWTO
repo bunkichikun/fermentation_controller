@@ -44,3 +44,9 @@ sudo dpkg -i grafana-enterprise-rpi_9.3.6_armhf.deb
 sudo /bin/systemctl enable grafana-server
 sudo /bin/systemctl start grafana-server
 # password grafana
+
+
+# to install temperature probe DS18B20 as per https://raspberry-lab.fr/Composants/Sonde-de-temperature-DS18B20-sur-Raspberry-Francais/
+pip install w1thermsensor
+pip install w1thermsensor[async]
+# add in /boot/config.txt dtoverlay=w1-gpio,gpiopin=6 for PIN 6
