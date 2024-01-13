@@ -44,7 +44,7 @@ class FermentationController:
         signals = (signal.SIGTERM, signal.SIGINT)
         for s in signals:
             self.loop.add_signal_handler(s, lambda s=s: asyncio.create_task(self.signalHandler(s, self.loop)))
-        # TODO set this loop as system current loop https://www.slingacademy.com/article/python-asyncio-what-are-coroutines-and-event-loops/
+        # set this loop as system current loop https://www.slingacademy.com/article/python-asyncio-what-are-coroutines-and-event-loops/
         asyncio.set_event_loop(self.loop)
 
         # init members
@@ -53,6 +53,7 @@ class FermentationController:
 
 
     def main_loop(self):
+
         # MAIN LOOP
         fc_settings.FC_LOGGER.info("starting FC Main Loop")
 
@@ -104,7 +105,14 @@ class FermentationController:
 
     def die(self):
         fc_settings.FC_LOGGER.info("die die die!")
+
+        # Free LOCK
         self.freeLock()
+
+        # Kill Prometheus HTTP Server
+        asyncio.run(self.tmpCtrl.prom_http_server.close())
+
+        # exit
         sys.exit()
 
 
@@ -125,7 +133,7 @@ def kill_and_rm_lock_file():
             line=content[0]
             [timestamp, pid] = line.split(" ")
             try:
-                os.kill(int(pid), signal.SIGHUP)
+                os.kill(int(pid), signal.SIGINT)
             except ProcessLookupError:
                 print("no such process...")
             except TabError:
