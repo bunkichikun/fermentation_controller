@@ -225,7 +225,7 @@ class TemperatureManager:
             self.heating_on()
             fc_settings.FC_LOGGER.info("turn heating on")
         else:
-            self.heatin_stop()
+            self.heating_stop()
             self.cooling_on()
             pass
             fc_settings.FC_LOGGER.info("turn cooling on")
