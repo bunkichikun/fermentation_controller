@@ -50,3 +50,7 @@ sudo /bin/systemctl start grafana-server
 pip install w1thermsensor
 pip install w1thermsensor[async]
 # add in /boot/config.txt dtoverlay=w1-gpio,gpiopin=6 for PIN 6
+
+
+# relay control with RPi.GPIO
+pip install RPi.GPIO

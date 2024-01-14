@@ -109,6 +109,9 @@ class FermentationController:
         # Free LOCK
         self.freeLock()
 
+        # stop GPIOs
+        self.tmpCtrl.die()
+
         # Kill Prometheus HTTP Server
         asyncio.run(self.tmpCtrl.prom_http_server.close())
 

@@ -8,6 +8,9 @@ import adafruit_dht
 
 from w1thermsensor import AsyncW1ThermSensor
 
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM) # GPIO Numbers instead of board numbers
+
 #import rrdtool
 from prometheus_client import Gauge, Summary
 from prometheus_async.aio.web import start_http_server
@@ -22,6 +25,10 @@ DHT_READ_RETRY_NUMBER=15
 
 RRD_DB_NAME = "run/temp_ctrl.rrd"
 RRD_TOTAL_DURATION = 60 * 24 * 3   # 3 days
+
+RELAY_COOLING_GPIO = 20 # black
+RELAY_STIRRING_GPIO = 7 # brown
+RELAY_HEATING_GPIO = 11 # purple
 
 # TARGET TEMPERATURE
 TARGET_INIT_TEMP = 30
@@ -84,8 +91,12 @@ class TemperatureManager:
 
     def __init__(self, startTime):
 
-        self.dhtDevice = adafruit_dht.DHT22(board.D4, use_pulseio=True)
-        self.dsSensor = AsyncW1ThermSensor()   #DS18B20
+        # intialize devices
+        self.dhtDevice = adafruit_dht.DHT22(board.D4, use_pulseio=True) # for Chamber temp & humidity
+        self.dsSensor = AsyncW1ThermSensor()   #DS18B20 for Product Temp
+        self.stirring = GPIO.setup(RELAY_STIRRING_GPIO, GPIO.OUT)
+        self.heating = GPIO.setup(RELAY_HEATING_GPIO, GPIO.OUT)
+        self.cooling = GPIO.setup(RELAY_COOLING_GPIO, GPIO.OUT)
 
         self.startTime = startTime
 
@@ -119,6 +130,30 @@ class TemperatureManager:
         fc_settings.FC_LOGGER.info("Starting Prometheus HTTP Server to expose metrics")
         self.prom_http_server = await start_http_server(port=PROMETHEUS_EXPOSED_PORT)
         fc_settings.FC_LOGGER.info("Prometheus HTTP Server started")
+
+    def stirring_on(self):
+        GPIO.output(RELAY_STIRRING_GPIO, GPIO.HIGH)
+
+    def stirring_stop(self):
+        GPIO.output(RELAY_STIRRING_GPIO, GPIO.LOW)
+
+    def heating_on(self):
+        GPIO.output(RELAY_HEATING_GPIO, GPIO.HIGH)
+
+    def heating_stop(self):
+        GPIO.output(RELAY_HEATING_GPIO, GPIO.LOW)
+
+    def cooling_on(self):
+        GPIO.output(RELAY_HEATING_GPIO, GPIO.HIGH)
+
+    def cooling_stop(self):
+        GPIO.output(RELAY_COOLING_GPIO, GPIO.LOW)
+
+
+    def die(self):
+        self.cooling_stop()
+        self.heating_stop()
+        self.stirring_stop()
 
 
     # PID
@@ -186,13 +221,20 @@ class TemperatureManager:
         if U > 0:
         #if self.PID_U() > 0:
             # turn heating on
+            self.cooling_stop()
+            self.heating_on()
             fc_settings.FC_LOGGER.info("turn heating on")
         else:
+            self.heatin_stop()
+            self.cooling_on()
             pass
             #fc_settings.FC_LOGGER.info("waiting for temperature to decrease")
 
 
     async def loop(self):
+
+        self.stirring_on()
+
         while True:
             await self.temperatureControl()
             await asyncio.sleep(TMP_CTRL_PERIOD)
