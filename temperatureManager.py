@@ -179,7 +179,7 @@ class TemperatureManager:
         self.chamberHum.set(humid)
 
         #fc_settings.FC_LOGGER.debug("Time: " + str(time.time() - self.startTime))
-        fc_settings.FC_LOGGER.info("Product Temp: " + str(productTemp) + "Chamber Temp: " + str(chamberTemp)  + " Humidity: "+ str(humid))
+        fc_settings.FC_LOGGER.info("Product Temp: " + str(productTemp) + " Chamber Temp: " + str(chamberTemp)  + " Humidity: "+ str(humid))
 
         U = self.PID_U()
         fc_settings.FC_LOGGER.debug("U: " + str(U))
