@@ -228,7 +228,7 @@ class TemperatureManager:
             self.heatin_stop()
             self.cooling_on()
             pass
-            #fc_settings.FC_LOGGER.info("waiting for temperature to decrease")
+            fc_settings.FC_LOGGER.info("turn cooling on")
 
 
     async def loop(self):
