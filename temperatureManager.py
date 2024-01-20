@@ -113,6 +113,8 @@ class TemperatureManager:
         self.chamberTemp = Gauge("fc_chamber_temp", "Temperature of the Frementation Chamber")
         self.chamberHum = Gauge("fc_chamber_hum", "Humidity of the Fermentation Chamber")
         self.targetTemp_g = Gauge("fc_target_temp", "Humidity of the Fermentation Chamber")
+        self.PIDFunc_g = Gauge("fc_pid_function","Value of the PID control function")
+        self.heating_g = Gauge("fc_heating_cooling", "Heating or Cooling Activated")
 
 
         fc_settings.FC_LOGGER.info("creating RRD database")
@@ -138,12 +140,14 @@ class TemperatureManager:
         GPIO.output(RELAY_STIRRING_GPIO, GPIO.LOW)
 
     def heating_on(self):
+        self.heating_g.set(1.0)
         GPIO.output(RELAY_HEATING_GPIO, GPIO.HIGH)
 
     def heating_stop(self):
         GPIO.output(RELAY_HEATING_GPIO, GPIO.LOW)
 
     def cooling_on(self):
+        self.heating_g.set(-1.0)
         GPIO.output(RELAY_HEATING_GPIO, GPIO.HIGH)
 
     def cooling_stop(self):
@@ -218,6 +222,8 @@ class TemperatureManager:
 
         U = self.PID_U()
         fc_settings.FC_LOGGER.debug("U: " + str(U))
+        self.PIDFunc_g.set(U)
+
         if U > 0:
         #if self.PID_U() > 0:
             # turn heating on
