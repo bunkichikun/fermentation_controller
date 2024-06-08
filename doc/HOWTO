@@ -1,9 +1,10 @@
 # Copyright (c) 2024 Benoît LIBEAU
 
 # How to new install
+sudo apt install python3-pip
 
-pip install sdbus
-pip install sdbus-networkmanager
+pip3 install sdbus
+pip3 install sdbus-networkmanager
 
 
 # AM2302
@@ -29,7 +30,7 @@ sudo apt-get install librrd-dev libpython3-dev
 ## Prometheus
 # get the linux one https://github.com/prometheus/prometheus/releases/download/v2.37.9/prometheus-2.37.9.netbsd-armv6.tar.gz
 #
-pip install prometheus-client
+pip3 install prometheus-client
 
 python -m pip install prometheus-async
 python -m pip install prometheus-async[aiohttp]
@@ -47,10 +48,10 @@ sudo /bin/systemctl start grafana-server
 
 
 # to install temperature probe DS18B20 as per https://raspberry-lab.fr/Composants/Sonde-de-temperature-DS18B20-sur-Raspberry-Francais/
-pip install w1thermsensor
-pip install w1thermsensor[async]
+pip3 install w1thermsensor
+pip3 install w1thermsensor[async]
 # add in /boot/config.txt dtoverlay=w1-gpio,gpiopin=6 for PIN 6
 
 
 # relay control with RPi.GPIO
-pip install RPi.GPIO
+pip3 install RPi.GPIO
